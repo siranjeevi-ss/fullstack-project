@@ -1,4 +1,4 @@
-#!/home/ubuntu/fullstack-project/backend/venv/bin/python3
+#!/home/ec2-user/fullstack-project/backend/venv/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys
