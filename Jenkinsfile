@@ -47,7 +47,7 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 sh '''
-                docker build -t ${BACKEND_IMAGE}:latest ${BACKEND_DIR}
+                docker build --no-cache -t ${BACKEND_IMAGE}:latest ${BACKEND_DIR}
                 docker build -t ${FRONTEND_IMAGE}:latest ${FRONTEND_DIR}
                 '''
             }
