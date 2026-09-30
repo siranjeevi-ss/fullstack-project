@@ -3,7 +3,10 @@ pipeline {
 
     environment {
         FRONTEND_DIR = "frontend"
-        BACKEND_DIR = "backend"
+        BACKEND_DIR  = "backend"
+
+        BACKEND_IMAGE  = "fullstack-project-backend"
+        FRONTEND_IMAGE = "fullstack-project-frontend"
     }
 
     stages {
@@ -38,6 +41,35 @@ pipeline {
                     npm run build
                     '''
                 }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh '''
+                docker build -t ${BACKEND_IMAGE}:latest ${BACKEND_DIR}
+                docker build -t ${FRONTEND_IMAGE}:latest ${FRONTEND_DIR}
+                '''
+            }
+        }
+
+        stage('Trivy Security Scan') {
+            steps {
+                sh '''
+                echo "Scanning Backend Image..."
+                trivy image \
+                    --severity HIGH,CRITICAL \
+                    --ignore-unfixed \
+                    --exit-code 1 \
+                    ${BACKEND_IMAGE}:latest
+
+                echo "Scanning Frontend Image..."
+                trivy image \
+                    --severity HIGH,CRITICAL \
+                    --ignore-unfixed \
+                    --exit-code 1 \
+                    ${FRONTEND_IMAGE}:latest
+                '''
             }
         }
 
@@ -76,9 +108,13 @@ pipeline {
                 sh '''
                 sleep 10
 
-                curl http://127.0.0.1:8000/
+                echo "Checking Backend..."
+                curl -f http://127.0.0.1:8000/
 
-                curl http://127.0.0.1:5173/
+                echo "Checking Frontend..."
+                curl -f http://127.0.0.1:5173/
+
+                echo "Health Check Passed"
                 '''
             }
         }
@@ -91,6 +127,13 @@ pipeline {
 
         failure {
             echo "Deployment Failed"
+        }
+
+        always {
+            sh '''
+            echo "Cleaning temporary Python virtual environment..."
+            rm -rf backend/venv
+            '''
         }
     }
 }
